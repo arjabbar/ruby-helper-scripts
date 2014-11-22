@@ -1,0 +1,16 @@
+#!/home/arjabbar/.rbenv/versions/2.2.0-dev/bin/ruby
+
+require "thor"
+
+class RubyHelper < Thor
+
+  desc "create [filename]", "Creates a new executable ruby script with the name [filename]."
+  def create(filename)
+    hash_bang = "#!#{`which ruby`}"
+    File.write filename, "#{hash_bang}\n"
+    system "chmod +x #{filename}"
+  end
+
+end
+
+RubyHelper.start ARGV

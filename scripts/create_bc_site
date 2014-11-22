@@ -1,4 +1,5 @@
-#!/home/arjabbar/.rbenv/shims/ruby
+#!/home/arjabbar/.rbenv/versions/2.2.0-dev/bin/ruby
+
 require 'slop'
 
 args = Slop.parse(autocreate: true) do
