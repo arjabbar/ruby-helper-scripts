@@ -1,0 +1,37 @@
+#!/home/arjabbar/.rbenv/shims/ruby
+require 'pry'
+require 'thor'
+require 'colorize'
+
+class FileScan < Thor
+  option :glob, aliases: [:globs], required: true, type: :array
+  option :verbose, aliases: [:v], type: :boolean
+  desc 'search', 'Scans a glob of files for a certain string.'
+  def search(*strings)
+    Dir[*options[:glob]].each do |filename|
+      open(filename).each_line.with_index do |line, index|
+        if last_match = Regexp.new(strings.join '|').match(line)
+          last_match.to_a.each do |matching_word|
+            puts "\033#{filename.blue} includes #{matching_word.bold} at line #{(index + 1).to_s.green}"
+            puts line.gsub(last_match.to_s, last_match.to_s.bold).yellow if options[:verbose]
+          end
+        end
+      end
+    end
+  end
+end
+
+FileScan.start(ARGV)
+
+# binding.pry
+# Dir[ARGV.first].each do |filename|
+#   open(filename).lines.with_index.each do |line, index|
+#     if last_match = Regexp.new(ARGV.join '|').match(line)
+#       last_match.to_a.each do |matching_word|
+#         puts "\033#{filename.blue} includes #{matching_word.bold} at line #{(index + 1).to_s.green}"
+#         exit_status = 1
+#       end
+#     end
+#   end
+# end
+# exit exit_status

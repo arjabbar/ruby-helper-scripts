@@ -1,0 +1,79 @@
+#!/home/arjabbar/.rbenv/shims/ruby
+
+require 'rubygems'
+require 'pry'
+require 'json'
+require 'net/ftp'
+require 'colorize'
+
+SFTP_CONFIG_FILENAME = "sftp-config.json"
+
+def at_root_directory?(directory)
+  !directory || directory == '/'
+end
+
+def sftp_file_exists?
+  !!find_config_file_in_parent_directories
+end
+
+def find_config_file_in_parent_directories
+  directory_being_searched = Dir.pwd
+  begin
+    filepath = File.join directory_being_searched, SFTP_CONFIG_FILENAME
+    return filepath if File.exists? filepath
+    return false if at_root_directory? directory_being_searched
+  end while(directory_being_searched = File.expand_path('..', directory_being_searched))
+  false
+end
+
+def config_filepath
+  @filepath ||=  Pathname.new find_config_file_in_parent_directories  
+end
+
+def config_file
+  config_filepath.open
+end
+
+def config_file_directory
+  config_filepath.dirname.realdirpath
+end
+
+def cleaned_config_raw
+  config_file
+  .readlines
+  .map(&:strip)
+  .select{|x| /^\".*\":/ === x}
+  .join
+  .chomp ','
+end
+
+def cleaned_config_json
+  "{#{cleaned_config_raw}}"
+end
+
+def sftp_configuration
+  @configuration ||= JSON.parse cleaned_config_json
+end
+
+def current_directory_name
+  Dir.pwd.gsub config_file_directory.to_s, ''
+end
+
+def remote_directory
+  sftp_configuration['remote_path']
+end
+
+raise "There isn't a sftp file in the root or parents of this folder." unless sftp_file_exists?
+
+ftp = Net::FTP.new
+ftp.connect sftp_configuration['host'], sftp_configuration['port']
+ftp.login sftp_configuration['user'], sftp_configuration['password']
+ftp.chdir remote_directory rescue puts("Tried listing #{remote_directory}")
+ftp.chdir "#{remote_directory}/#{current_directory_name}" rescue puts("Tried listing #{current_directory_name}")
+ftp.ls.each do |file|
+  if file.include? '<DIR>'
+    puts file.green
+  else
+    puts file.blue.bold
+  end
+end

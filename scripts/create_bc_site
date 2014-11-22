@@ -1,0 +1,50 @@
+#!/home/arjabbar/.rbenv/shims/ruby
+require 'slop'
+
+args = Slop.parse(autocreate: true) do
+  banner "Avaiable arguments --port, --type (ftp or sftp), --username, --password, --path (Remote path), --name (Site name)"
+end
+
+raise "A site is required. (e.g. create_bc_site --site example.com)" unless args[:site]
+
+sftp_config = <<-JSON
+{
+    // The tab key will cycle through the settings when first created
+    // Visit http://wbond.net/sublime_packages/sftp/settings for help
+    
+    // sftp, ftp or ftps
+    "type": "#{args[:type] || "sftp"}",
+
+    "sync_down_on_open": false,
+    "sync_same_age": true,
+    
+    "host": "#{args[:site]}",
+    "user": "#{args[:site]}/#{args[:username] || "abdur@synapse.ws"}",
+    "password": "#{args[:password] || ENV[:BC_FTP_PASSWORD]}",
+    "port": "#{args[:port] || 22}",
+    
+    "remote_path": "#{args[:path] || "/"}",
+    //"file_permissions": "664",
+    //"dir_permissions": "775",
+    
+    //"extra_list_connections": 0,
+
+    "connect_timeout": 10,
+    //"keepalive": 120,
+    //"ftp_passive_mode": true,
+    //"ftp_obey_passive_host": false,
+    //"ssh_key_file": "~/.ssh/id_rsa",
+    //"sftp_flags": ["-F", "/path/to/ssh_config"],
+    
+    //"preserve_modification_times": false,
+    //"remote_time_offset_in_hours": 0,
+    //"remote_encoding": "utf-8",
+    //"remote_locale": "C",
+    //"allow_config_upload": false,
+}
+JSON
+
+raise "Please enter a site name. (e.g. create_bc_site --name TestSite)" unless args[:name]
+
+Dir.mkdir args[:name]
+File.open("#{args[:name]}/sftp-config.json", 'w') {|f| f.write(sftp_config) }

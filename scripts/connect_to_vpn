@@ -1,0 +1,2 @@
+#!/home/arjabbar/.rbenv/shims/ruby
+system "nmcli c list | grep vpn | awk '{print $2}' | xargs nmcli c up uuid"
